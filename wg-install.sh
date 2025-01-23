@@ -6,9 +6,37 @@ if [ "$(id -u)" -ne 0 ]; then
    exit 1
 fi
 
-# Обновление списков пакетов и установка Wireguard
-apt update
-apt install -y wireguard
+# Определяем дистрибутив и устанавливаем WireGuard в соответствии с официальной документацией
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+
+    case "$ID" in
+        "debian"|"ubuntu")
+            apt-get update
+            apt-get install -y gnupg
+            echo "deb http://deb.debian.org/debian $(lsb_release -cs)-backports main" > /etc/apt/sources.list.d/backports.list
+            apt-get update
+            apt-get install -y wireguard
+            ;;
+        "centos"|"rhel")
+            yum install -y epel-release elrepo-release
+            yum install -y kmod-wireguard wireguard-tools
+            ;;
+        "fedora")
+            dnf install -y wireguard-tools
+            ;;
+        "arch")
+            pacman -Syu --noconfirm wireguard-tools
+            ;;
+        *)
+            echo "Дистрибутив Linux не поддерживается этим скриптом."
+            exit 1
+            ;;
+    esac
+else
+    echo "Файл /etc/os-release не найден. Невозможно определить дистрибутив."
+    exit 1
+fi
 
 # Определение системы и выполнение соответствующих действий
 if pidof systemd > /dev/null; then
@@ -49,11 +77,10 @@ elif command -v openrc >/dev/null 2>&1; then
 
     # Установка inotify-tools, если это OpenRC
     if ! command -v inotifyd >/dev/null; then
-        echo "Installing inotify-tools..."
-        apt install -y inotify-tools
+        install_package inotify-tools
     fi
 
-    # Создание openrc файлов
+    # Создание OpenRC файлов
     cd /usr/local/bin/
     cat << EOF > wgui
 #!/bin/sh
@@ -73,7 +100,7 @@ command_background=yes
 EOF
     chmod +x wgui
 
-    # Применение openrc конфигураций
+    # Применение OpenRC конфигураций
     rc-service wgui start
     rc-update add wgui default
 
