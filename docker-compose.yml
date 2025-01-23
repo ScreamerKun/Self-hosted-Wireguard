@@ -1,0 +1,25 @@
+version: '3'
+services:
+  wireguard-ui:
+    container_name: wireguard-ui
+    image: ngoduykhanh/wireguard-ui:latest
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - WG_CONF_DIR=/etc/wireguard
+      - WGUI_USERNAME=
+      - WGUI_PASSWORD=
+      - WGUI_DNS=1.1.1.1, 1.0.0.1
+      - WGUI_PERSISTENT_KEEPALIVE=25
+      - WGUI_CONFIG_FILE_PATH=/etc/wireguard/wg0.conf
+      - WGUI_SERVER_INTERFACE_ADDRESSES=
+      - WGUI_SERVER_LISTEN_PORT=51820
+      - TELEGRAM_TOKEN=
+      - TELEGRAM_ALLOW_CONF_REQUEST=true
+      - TELEGRAM_FLOOD_WAIT=5
+      - WGUI_MANAGE_START=true
+      - WGUI_MANAGE_RESTART=true
+    volumes:
+      - /etc/wireguard:/etc/wireguard
+      - ./db:/app/db
